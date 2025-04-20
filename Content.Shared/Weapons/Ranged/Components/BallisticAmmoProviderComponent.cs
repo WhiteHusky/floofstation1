@@ -61,4 +61,25 @@ public sealed partial class BallisticAmmoProviderComponent : Component
     /// </summary>
     [DataField]
     public TimeSpan FillDelay = TimeSpan.FromSeconds(0.5);
+
+    [DataField]
+    public bool CanSeeContents = true;
+
+    [DataField]
+    public bool PutCycledIntoHand = false;
+
+    [DataField]
+    public string ExamineLocText = "gun-magazine-examine";
+
+    [DataField]
+    public string CycleLocText = "gun-magazine-examine";
+
+    [DataField]
+    public string CycledLocText = "gun-ballistic-cycled";
+
+    [DataField]
+    public string CycledEmptyLocText = "gun-ballistic-cycled-empty";
+
+    [DataField]
+    public bool CycleOnAltVerb = false;
 }

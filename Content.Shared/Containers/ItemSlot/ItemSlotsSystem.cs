@@ -211,6 +211,10 @@ namespace Content.Shared.Containers.ItemSlots
                 if (!slot.InsertOnInteract)
                     continue;
 
+                // Player needs to right-click "Insert" on greylist items
+                if (_whitelistSystem.IsWhitelistPass(slot.Greylist, args.Used))
+                    continue;
+
                 if (!CanInsert(uid, args.Used, args.User, slot, swap: slot.Swap ?? _defaultQuickSwap, popup: args.User))
                     continue;
 

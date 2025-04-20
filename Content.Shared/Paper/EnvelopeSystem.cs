@@ -1,6 +1,9 @@
 using Content.Shared.DoAfter;
 using Content.Shared.Containers.ItemSlots;
+using Content.Shared.Interaction;
+using Content.Shared.Interaction.Events;
 using Content.Shared.Verbs;
+using Content.Shared.Weapons.Ranged.Components;
 using Robust.Shared.Audio.Systems;
 using Content.Shared.Examine;
 
@@ -21,6 +24,8 @@ public sealed class EnvelopeSystem : EntitySystem
         SubscribeLocalEvent<EnvelopeComponent, GetVerbsEvent<AlternativeVerb>>(OnGetAltVerbs);
         SubscribeLocalEvent<EnvelopeComponent, EnvelopeDoAfterEvent>(OnDoAfter);
         SubscribeLocalEvent<EnvelopeComponent, ExaminedEvent>(OnExamine);
+        SubscribeLocalEvent<EnvelopeComponent, InteractUsingEvent>(OnInteractUsing);
+        SubscribeLocalEvent<EnvelopeComponent, UseInHandEvent>(OnUseInHand);
     }
 
     private void OnExamine(Entity<EnvelopeComponent> ent, ref ExaminedEvent args)
@@ -65,6 +70,16 @@ public sealed class EnvelopeSystem : EntitySystem
         args.Cancelled |= ent.Comp.State == EnvelopeComponent.EnvelopeState.Sealed;
     }
 
+    private void OnInteractUsing(Entity<EnvelopeComponent> ent, ref InteractUsingEvent args)
+    {
+        args.Handled |= ent.Comp.State != EnvelopeComponent.EnvelopeState.Open;
+    }
+
+    private void OnUseInHand(Entity<EnvelopeComponent> ent, ref UseInHandEvent args)
+    {
+        args.Handled |= ent.Comp.State != EnvelopeComponent.EnvelopeState.Open;
+    }
+
     private void TryStartDoAfter(Entity<EnvelopeComponent> ent, EntityUid user, TimeSpan delay)
     {
         if (ent.Comp.EnvelopeDoAfter.HasValue)
@@ -91,12 +106,18 @@ public sealed class EnvelopeSystem : EntitySystem
 
         if (ent.Comp.State == EnvelopeComponent.EnvelopeState.Open)
         {
+            if (TryComp<BallisticAmmoProviderComponent>(ent, out var paperMagazine))
+                paperMagazine.CanSeeContents = paperMagazine.Cycleable = false;
+
             _audioSystem.PlayPredicted(ent.Comp.SealSound, ent.Owner, args.User);
             ent.Comp.State = EnvelopeComponent.EnvelopeState.Sealed;
             Dirty(ent.Owner, ent.Comp);
         }
         else if (ent.Comp.State == EnvelopeComponent.EnvelopeState.Sealed)
         {
+            if (TryComp<BallisticAmmoProviderComponent>(ent, out var paperMagazine))
+                paperMagazine.CanSeeContents = paperMagazine.Cycleable = true;
+
             _audioSystem.PlayPredicted(ent.Comp.TearSound, ent.Owner, args.User);
             ent.Comp.State = EnvelopeComponent.EnvelopeState.Torn;
             Dirty(ent.Owner, ent.Comp);

@@ -27,6 +27,7 @@ public abstract partial class SharedGunSystem
 
         SubscribeLocalEvent<BallisticAmmoProviderComponent, ExaminedEvent>(OnBallisticExamine);
         SubscribeLocalEvent<BallisticAmmoProviderComponent, GetVerbsEvent<Verb>>(OnBallisticVerb);
+        SubscribeLocalEvent<BallisticAmmoProviderComponent, GetVerbsEvent<AlternativeVerb>>(OnBallisticAltVerb);
         SubscribeLocalEvent<BallisticAmmoProviderComponent, InteractUsingEvent>(OnBallisticInteractUsing);
         SubscribeLocalEvent<BallisticAmmoProviderComponent, AfterInteractEvent>(OnBallisticAfterInteract);
         SubscribeLocalEvent<BallisticAmmoProviderComponent, AmmoFillDoAfterEvent>(OnBallisticAmmoFillDoAfter);
@@ -180,14 +181,31 @@ public abstract partial class SharedGunSystem
 
     private void OnBallisticVerb(EntityUid uid, BallisticAmmoProviderComponent component, GetVerbsEvent<Verb> args)
     {
-        if (!args.CanAccess || !args.CanInteract || args.Hands == null || !component.Cycleable)
+        if (component.CycleOnAltVerb ||!args.CanAccess || !args.CanInteract || args.Hands == null || !component.Cycleable)
             return;
 
         if (component.Cycleable)
         {
             args.Verbs.Add(new Verb()
             {
-                Text = Loc.GetString("gun-ballistic-cycle"),
+                Text = Loc.GetString(component.CycleLocText),
+                Disabled = GetBallisticShots(component) == 0,
+                Act = () => ManualCycle(uid, component, TransformSystem.GetMapCoordinates(uid), args.User),
+            });
+
+        }
+    }
+
+    private void OnBallisticAltVerb(EntityUid uid, BallisticAmmoProviderComponent component, GetVerbsEvent<AlternativeVerb> args)
+    {
+        if (!component.CycleOnAltVerb || !args.CanAccess || !args.CanInteract || args.Hands == null || !component.Cycleable)
+            return;
+
+        if (component.Cycleable)
+        {
+            args.Verbs.Add(new AlternativeVerb()
+            {
+                Text = Loc.GetString(component.CycleLocText),
                 Disabled = GetBallisticShots(component) == 0,
                 Act = () => ManualCycle(uid, component, TransformSystem.GetMapCoordinates(uid), args.User),
             });
@@ -197,10 +215,10 @@ public abstract partial class SharedGunSystem
 
     private void OnBallisticExamine(EntityUid uid, BallisticAmmoProviderComponent component, ExaminedEvent args)
     {
-        if (!args.IsInDetailsRange)
+        if (!component.CanSeeContents && !args.IsInDetailsRange)
             return;
 
-        args.PushMarkup(Loc.GetString("gun-magazine-examine", ("color", AmmoExamineColor), ("count", GetBallisticShots(component))));
+        args.PushMarkup(Loc.GetString(component.ExamineLocText, ("color", AmmoExamineColor), ("count", GetBallisticShots(component))));
     }
 
     private void ManualCycle(EntityUid uid, BallisticAmmoProviderComponent component, MapCoordinates coordinates, EntityUid? user = null, GunComponent? gunComp = null)
@@ -218,18 +236,18 @@ public abstract partial class SharedGunSystem
 
         Dirty(uid, component);
         Audio.PlayPredicted(component.SoundRack, uid, user);
+        Cycle(uid, component, coordinates, user);
+
 
         var shots = GetBallisticShots(component);
-        Cycle(uid, component, coordinates);
-
-        var text = Loc.GetString(shots == 0 ? "gun-ballistic-cycled-empty" : "gun-ballistic-cycled");
+        var text = Loc.GetString(shots == 0 ? component.CycledEmptyLocText : component.CycledLocText);
 
         Popup(text, uid, user);
         UpdateBallisticAppearance(uid, component);
         UpdateAmmoCount(uid);
     }
 
-    protected abstract void Cycle(EntityUid uid, BallisticAmmoProviderComponent component, MapCoordinates coordinates);
+    protected abstract void Cycle(EntityUid uid, BallisticAmmoProviderComponent component, MapCoordinates coordinates, EntityUid? user);
 
     private void OnBallisticInit(EntityUid uid, BallisticAmmoProviderComponent component, ComponentInit args)
     {

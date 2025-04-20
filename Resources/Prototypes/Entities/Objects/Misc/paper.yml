@@ -789,14 +789,34 @@
   - type: Envelope
   - type: ContainerContainer
     containers:
-      letter_slot: !type:ContainerSlot
+      item_slot: !type:ContainerSlot
+  - type: BallisticAmmoProvider
+    soundRack: /Audio/Effects/packetrip.ogg
+    soundInsert: /Audio/Effects/packetrip.ogg
+    examineLocText: envelope-letter-magazine-examine
+    cycleLocText: envelope-letter-magazine-cycle
+    cycledLocText: envelope-letter-magazine-cycled
+    cycledEmptyLocText: envelope-letter-magazine-cycled-empty
+    putCycledIntoHand: true
+    cycleOnAltVerb: true
+    whitelist:
+      tags:
+        - Paper
+    capacity: 5
   - type: ItemSlots
     slots:
-      letter_slot:
-        name: envelope-letter-slot
+      item_slot:
+        name: envelope-item-slot
         insertSound: /Audio/Effects/packetrip.ogg
         ejectSound: /Audio/Effects/packetrip.ogg
+        priority: 10
         whitelist:
+          sizes:
+          - Tiny
+        greylist:
+          tags:
+            - Write
+        blacklist:
           tags:
             - Paper
   - type: ActivatableUI

@@ -74,6 +74,15 @@ namespace Content.Shared.Containers.ItemSlots
         [DataField]
         public EntityWhitelist? Blacklist;
 
+        /// <summary>
+        ///     Items that cannot be inserted by interacting because they could
+        //      be used on the entity or inserted into the entity. Like a pen
+        //      could be put into a envelope, but the player is most likely
+        //      trying to write on the envelope more often than not.
+        /// </summary>
+        [DataField]
+        public EntityWhitelist? Greylist;
+
         [DataField]
         public SoundSpecifier InsertSound = new SoundPathSpecifier("/Audio/Weapons/Guns/MagIn/revolver_magin.ogg");
 
